@@ -1,0 +1,65 @@
+services:
+  rag_app:
+    build: .
+    image: my_rag_image
+    container_name: aimorozov_rag_app
+    ports:
+      - "58084:58084"
+    environment:
+      - POETRY_VIRTUALENVS_CREATE=false
+      - LOG_LEVEL=INFO
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - EMBEDDING_MODEL_NAME=${EMBEDDING_MODEL_NAME}
+      - OLLAMA_HOST=http://ollama:11434
+      - GRADIO_PORT=58084
+    volumes:
+      - ./model_cache:/cache
+      - ./news_db:/app/news_db
+      - ./tests:/app/tests
+    restart: unless-stopped
+    depends_on:
+      - qdrant
+      - ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: aimorozov_qdrant
+    ports:
+      - '6335:6333'
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:0.6.8
+    container_name: ollama_service
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    restart: unless-stopped
+
+volumes:
+  model_cache:
+  news_db:
+  qdrant_data:
+  ollama_data:

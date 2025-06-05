@@ -1,0 +1,10 @@
+model_cache/
+qdrant_storage/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.swo
+*.db
+*.log
